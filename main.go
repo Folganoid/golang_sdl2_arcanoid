@@ -46,15 +46,23 @@ func (ball *ball) update(paddle1 *paddle) {
 		ball.xv = -ball.xv
 	}
 
+
 	if int(ball.y) + ball.radius> int(paddle1.y) - paddle1.h/2 {
 		if int(ball.x) > int(paddle1.x)-paddle1.w/2 && int(ball.x) < int(paddle1.x)+paddle1.w/2 {
-			ball.yv = -ball.yv
+
+			step := (ball.x - paddle1.x) / float32(paddle1.w/2)
+
+			ball.yv = -(ball.yv)
+			//ball.xv = ball.xv / step
+
+			fmt.Println("+++", step, "-", ball.xv*step, ":" ,-ball.yv*step)
+
 		}
 	}
 
 	if int(ball.y) > winHeight {
-		ball.x = 300
-		ball.y = 350
+		ball.x = 400
+		ball.y = 200
 	}
 
 }
@@ -79,11 +87,16 @@ func (paddle *paddle) draw(pixels []byte) {
 }
 
 func (paddle *paddle) update(keyState []uint8) {
-	if keyState[sdl.SCANCODE_LEFT] != 0 {
-		paddle.x -= 3
-	}
 	if keyState[sdl.SCANCODE_RIGHT] != 0 {
-		paddle.x += 3
+		if int(paddle.x) + paddle.w/2 < winWidth {
+			paddle.x += 10
+		}
+
+	}
+	if keyState[sdl.SCANCODE_LEFT] != 0 {
+		if int(paddle.x) - paddle.w/2 > 0 {
+			paddle.x -= 10
+		}
 	}
 }
 
@@ -141,7 +154,7 @@ func main() {
 	//}
 
 	player1 := paddle{pos{100,500}, 100, 20, color{255, 255, 255}}
-	ball := ball{pos{300,300}, 5, 1, 1,color{255,255,255}}
+	ball := ball{pos{300,300}, 5, 1, 5 ,color{255,255,255}}
 
 	keyState := sdl.GetKeyboardState()
 
@@ -163,7 +176,7 @@ func main() {
 		renderer.Copy(tex, nil, nil)
 		renderer.Present()
 
-		sdl.Delay(3)
+		sdl.Delay(16)
 	}
 
 }
