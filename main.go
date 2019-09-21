@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
+	"math"
 )
 
 const winWidth, winHeight int = 800, 600
+var speed float32 = 5
 
 type color struct {
 	r, g, b byte
@@ -47,15 +49,34 @@ func (ball *ball) update(paddle1 *paddle) {
 	}
 
 
-	if int(ball.y) + ball.radius> int(paddle1.y) - paddle1.h/2 {
+	if int(ball.y) + ball.radius > int(paddle1.y) - paddle1.h/2 &&
+		ball.y + float32(ball.radius) - paddle1.y - float32(paddle1.h/2) <= float32(ball.yv) {
 		if int(ball.x) > int(paddle1.x)-paddle1.w/2 && int(ball.x) < int(paddle1.x)+paddle1.w/2 {
 
 			step := (ball.x - paddle1.x) / float32(paddle1.w/2)
 
 			ball.yv = -(ball.yv)
-			//ball.xv = ball.xv / step
+			if ball.xv > 0 && step > 0 {
+				ball.xv += step * ball.xv
+			} else if ball.xv > 0 && step < 0 {
+				ball.xv += step * ball.xv
+			} else if ball.xv < 0 && step > 0 {
+				ball.xv -= step * ball.xv
+			} else if ball.xv < 0 && step < 0 {
+				ball.xv -= step * ball.xv
+			}
 
-			fmt.Println("+++", step, "-", ball.xv*step, ":" ,-ball.yv*step)
+			if ball.xv >= 0 && ball.xv < 0.1 && float32(math.Abs(float64(step))) > 0.5 && step > 0 {
+				ball.xv += 3
+			} else if ball.xv <= 0 && ball.xv > -0.1 && float32(math.Abs(float64(step))) > 0.5 && step < 0 {
+				ball.xv -= 3
+			}
+
+			modSpeed := math.Abs(float64(ball.xv)) + math.Abs(float64(ball.yv))
+			if modSpeed > float64(speed) {ball.yv = speed - ball.xv }
+			//if modSpeed > float64(speed) && ball.xv < 0 {ball.xv = speed + ball.yv }
+
+			fmt.Println("+++", step, "-", ball.xv, ":" , ball.yv,  modSpeed)
 
 		}
 	}
@@ -154,7 +175,7 @@ func main() {
 	//}
 
 	player1 := paddle{pos{100,500}, 100, 20, color{255, 255, 255}}
-	ball := ball{pos{300,300}, 5, 1, 5 ,color{255,255,255}}
+	ball := ball{pos{300,300}, 5, speed/10, speed-speed/10,color{255,255,255}}
 
 	keyState := sdl.GetKeyboardState()
 
