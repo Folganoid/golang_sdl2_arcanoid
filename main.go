@@ -9,114 +9,148 @@ import (
 const winWidth, winHeight int = 800, 600
 var speed float32 = 5
 
-type color struct {
-	r, g, b byte
+type Block struct {
+	Pos
+	W int
+	H int
+	Color Color
 }
 
-type pos struct {
-	x, y float32
+type Pos struct {
+	X, Y float32
 }
 
-type ball struct {
-	pos
-	radius int
-	xv float32
-	yv float32
-	color color
+type Ball struct {
+	Pos
+	Radius int
+	Xv float32
+	Yv float32
+	Color Color
 }
 
-func (ball *ball) draw(pixels []byte) {
-	for y:= -ball.radius ; y < ball.radius ; y++ {
-		for x := -ball.radius ; x < ball.radius ; x++ {
-			if x*x+y*y < ball.radius*ball.radius {
-				setPixel(int(ball.x)+x, int(ball.y)+y, ball.color, pixels)
+type Paddle struct {
+	Pos
+	W int
+	H int
+	Color Color
+}
+
+type Color struct {
+	R, G, B byte
+}
+
+func (ball *Ball) draw(pixels []byte) {
+	for y:= -ball.Radius ; y < ball.Radius ; y++ {
+		for x := -ball.Radius ; x < ball.Radius ; x++ {
+			if x*x+y*y < ball.Radius*ball.Radius {
+				setPixel(int(ball.X)+x, int(ball.Y)+y, ball.Color, pixels)
 			}
 		}
 	}
 }
 
-func (ball *ball) update(paddle1 *paddle) {
-	ball.x += ball.xv
-	ball.y += ball.yv
+func (ball *Ball) update(paddle1 *Paddle) {
+	ball.X += ball.Xv
+	ball.Y += ball.Yv
 
 	//handle collisions
-	if int(ball.y)-ball.radius < 0 {
-		ball.yv = -ball.yv
+	if int(ball.Y)-ball.Radius < 0 {
+		ball.Yv = -ball.Yv
 	}
 
-	if int(ball.x)+ball.radius > winWidth || int(ball.x) - ball.radius <0 {
-		ball.xv = -ball.xv
+	if int(ball.X)+ball.Radius > winWidth || int(ball.X) - ball.Radius <0 {
+		ball.Xv = -ball.Xv
 	}
 
 
-	if int(ball.y) + ball.radius > int(paddle1.y) - paddle1.h/2 &&
-		ball.y + float32(ball.radius) - paddle1.y - float32(paddle1.h/2) <= float32(ball.yv) {
-		if int(ball.x) > int(paddle1.x)-paddle1.w/2 && int(ball.x) < int(paddle1.x)+paddle1.w/2 {
+	// reflect logic
+	if int(ball.Y) + ball.Radius > int(paddle1.Y) - paddle1.H/2 &&
+		ball.Yv > 0 &&
+		ball.Y + float32(ball.Radius) - paddle1.Y - float32(paddle1.H/2) <= float32(ball.Yv) {
+		if int(ball.X) > int(paddle1.X)-paddle1.W/2 && int(ball.X) < int(paddle1.X)+paddle1.W/2 {
 
-			step := (ball.x - paddle1.x) / float32(paddle1.w/2)
+			step := (ball.X - paddle1.X) / float32(paddle1.W/2)
 
-			ball.yv = -(ball.yv)
-			if ball.xv > 0 && step > 0 {
-				ball.xv += step * ball.xv
-			} else if ball.xv > 0 && step < 0 {
-				ball.xv += step * ball.xv
-			} else if ball.xv < 0 && step > 0 {
-				ball.xv -= step * ball.xv
-			} else if ball.xv < 0 && step < 0 {
-				ball.xv -= step * ball.xv
+			// ball reflecting from paddle
+			ball.Yv = -(ball.Yv)
+			if ball.Xv > 0 && step > 0 {
+				ball.Xv += step * ball.Xv
+			} else if ball.Xv > 0 && step < 0 {
+				ball.Xv += step * ball.Xv
+			} else if ball.Xv < 0 && step > 0 {
+				ball.Xv -= step * ball.Xv
+			} else if ball.Xv < 0 && step < 0 {
+				ball.Xv -= step * ball.Xv
 			}
 
-			if ball.xv >= 0 && ball.xv < 0.1 && float32(math.Abs(float64(step))) > 0.5 && step > 0 {
-				ball.xv += 3
-			} else if ball.xv <= 0 && ball.xv > -0.1 && float32(math.Abs(float64(step))) > 0.5 && step < 0 {
-				ball.xv -= 3
+			// change angle if the trajectory is too vertical
+			if ball.Xv >= 0 && ball.Xv < 0.1 && float32(math.Abs(float64(step))) > 0.5 && step > 0 {
+				ball.Xv += 3
+			} else if ball.Xv <= 0 && ball.Xv > -0.1 && float32(math.Abs(float64(step))) > 0.5 && step < 0 {
+				ball.Xv -= 3
 			}
 
-			modSpeed := math.Abs(float64(ball.xv)) + math.Abs(float64(ball.yv))
-			if modSpeed > float64(speed) {ball.yv = speed - ball.xv }
-			//if modSpeed > float64(speed) && ball.xv < 0 {ball.xv = speed + ball.yv }
+			// correct speed
+			modSpeed := math.Abs(float64(ball.Xv)) + math.Abs(float64(ball.Yv))
+			if modSpeed > float64(speed) || modSpeed < float64(speed) {
+				ball.Yv = -(speed - float32(math.Abs(float64(ball.Xv))))
+				fmt.Println("!+!")
+			}
 
-			fmt.Println("+++", step, "-", ball.xv, ":" , ball.yv,  modSpeed)
+			fmt.Println("+++", step, "-", ball.Xv, ":" , ball.Yv,  modSpeed)
 
 		}
 	}
 
-	if int(ball.y) > winHeight {
-		ball.x = 400
-		ball.y = 200
+	if int(ball.Y) > winHeight {
+		ball.X = 400
+		ball.Y = 200
 	}
 
 }
 
+func (block *Block) draw(pixels []byte) {
 
-type paddle struct {
-	pos
-	w int
-	h int
-	color color
-}
+	blocColor := block.Color
+	startX := int(block.X)
+	startY := int(block.Y)
 
-func (paddle *paddle) draw(pixels []byte) {
-	startX := int(paddle.x) - paddle.w/2
-	startY := int(paddle.y) - paddle.h/2
+	for y := 0; y < block.H; y++ {
+		for x := 0; x < block.W; x++ {
+			if (x == 0 || y == 0) {
+				block.Color = Color{blocColor.R +50, blocColor.G + 50, blocColor.B + 50}
+			} else if (x == block.W || y == block.H) {
+				block.Color = Color{blocColor.R - 50, blocColor.G - 50, blocColor.B - 50}
+			} else {
+				block.Color = blocColor
+			}
 
-	for y := 0; y < paddle.h; y++ {
-		for x := 0; x < paddle.w; x++ {
-			setPixel(startX+x, startY+y, paddle.color, pixels)
+			setPixel(startX+x, startY+y, block.Color, pixels)
 		}
 	}
 }
 
-func (paddle *paddle) update(keyState []uint8) {
+func (paddle *Paddle) draw(pixels []byte) {
+	startX := int(paddle.X) - paddle.W/2
+	startY := int(paddle.Y) - paddle.H/2
+
+	for y := 0; y < paddle.H; y++ {
+		for x := 0; x < paddle.W; x++ {
+			setPixel(startX+x, startY+y, paddle.Color, pixels)
+		}
+	}
+}
+
+func (paddle *Paddle) update(keyState []uint8) {
 	if keyState[sdl.SCANCODE_RIGHT] != 0 {
-		if int(paddle.x) + paddle.w/2 < winWidth {
-			paddle.x += 10
+		if int(paddle.X) + paddle.W/2 < winWidth {
+			paddle.X += 10
 		}
 
 	}
 	if keyState[sdl.SCANCODE_LEFT] != 0 {
-		if int(paddle.x) - paddle.w/2 > 0 {
-			paddle.x -= 10
+		if int(paddle.X) - paddle.W/2 > 0 {
+			paddle.X -= 10
 		}
 	}
 }
@@ -127,12 +161,12 @@ func clear(pixels []byte) {
 	}
 }
 
-func setPixel(x, y int, c color, pixels []byte) {
+func setPixel(x, y int, c Color, pixels []byte) {
 	index := (y*winWidth + x) * 4
 	if index < len(pixels) - 4 && index >= 0 {
-		pixels[index] = c.r
-		pixels[index+1] = c.g
-		pixels[index+2] = c.b
+		pixels[index] = c.R
+		pixels[index+1] = c.G
+		pixels[index+2] = c.B
 	}
 }
 
@@ -174,8 +208,13 @@ func main() {
 	//	}
 	//}
 
-	player1 := paddle{pos{100,500}, 100, 20, color{255, 255, 255}}
-	ball := ball{pos{300,300}, 5, speed/10, speed-speed/10,color{255,255,255}}
+	player1 := Paddle{Pos{100,500}, 100, 20, Color{255, 255, 255}}
+
+	block1 := Block{Pos{100,100}, 50, 20, Color{255, 255, 0}}
+	block2 := Block{Pos{150,100}, 50, 20, Color{255, 255, 0}}
+	block3 := Block{Pos{200,100}, 50, 20, Color{255, 255, 0}}
+
+	ball := Ball{Pos{300,300}, 5, speed/10, speed-speed/10,Color{255,255,255}}
 
 	keyState := sdl.GetKeyboardState()
 
@@ -190,14 +229,19 @@ func main() {
 		clear(pixels)
 		player1.update(keyState)
 		player1.draw(pixels)
+
 		ball.draw(pixels)
 		ball.update(&player1)
+
+		block1.draw(pixels)
+		block2.draw(pixels)
+		block3.draw(pixels)
 
 		tex.Update(nil, pixels, winWidth*4)
 		renderer.Copy(tex, nil, nil)
 		renderer.Present()
 
-		sdl.Delay(16)
+		sdl.Delay(5)
 	}
 
 }
