@@ -90,10 +90,14 @@ func main() {
 		player1.update(keyState)
 		player1.draw(pixels)
 
+		ball.update(&player1, keyState)
 		ball.draw(pixels)
-		ball.update(&player1)
 
 		field.draw(pixels)
+
+		// reflect from blocks
+		BlockCheck(&ball, &field)
+
 
 		tex.Update(nil, pixels, winWidth*4)
 		renderer.Copy(tex, nil, nil)

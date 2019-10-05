@@ -38,6 +38,8 @@ func (field *Field) draw(pixels []byte) {
 	for y := 0; y < len(field.Arr); y ++ {
 		for x := 0; x < len(field.Arr[y]); x ++ {
 
+			if !field.Arr[y][x].Exist {continue}
+
 			field.Arr[y][x].Y = float32(y*blockHeight + 50)
 			field.Arr[y][x].X = float32(x*blockWidth)
 			field.Arr[y][x].draw(pixels)
@@ -64,4 +66,35 @@ func (block *Block) draw(pixels []byte) {
 			setPixel(startX+x, startY+y, block.Color, pixels)
 		}
 	}
+}
+
+func BlockCheck(ball *Ball, field *Field) {
+
+	for y := 0; y < len(field.Arr); y ++ {
+		for x := 0; x < len(field.Arr[y]); x ++ {
+
+			field.Arr[y][x].Y = float32(y*blockHeight + 50)
+			field.Arr[y][x].X = float32(x*blockWidth)
+
+			if !field.Arr[y][x].Exist {continue}
+
+			if
+				ball.X + float32(ball.Radius) > field.Arr[y][x].X &&
+				ball.X - float32(ball.Radius) < field.Arr[y][x].X + blockWidth &&
+				ball.Y + float32(ball.Radius) < field.Arr[y][x].Y + blockHeight &&
+				ball.Y - float32(ball.Radius) > field.Arr[y][x].Y {
+
+					//check from which side...
+					if ball.X > field.Arr[y][x].X && ball.X < field.Arr[y][x].X + blockWidth {
+						field.Arr[y][x].Exist = false
+						ball.Yv = -ball.Yv
+					} else if ball.Y < field.Arr[y][x].Y + blockHeight && ball.Y > field.Arr[y][x].Y {
+						field.Arr[y][x].Exist = false
+						ball.Xv = -ball.Xv
+					}
+
+			}
+		}
+	}
+
 }

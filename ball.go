@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/veandco/go-sdl2/sdl"
 	"math"
 	"fmt"
 )
@@ -23,7 +24,15 @@ func (ball *Ball) draw(pixels []byte) {
 	}
 }
 
-func (ball *Ball) update(paddle1 *Paddle) {
+func (ball *Ball) update(paddle1 *Paddle, keyState []uint8) {
+
+	if keyState[sdl.SCANCODE_SPACE] != 0 {
+		if ball.Xv == 0 && ball.Yv == 0 {
+			ball.Xv = 0.5
+			ball.Yv = -4.5
+		}
+	}
+
 	ball.X += ball.Xv
 	ball.Y += ball.Yv
 
@@ -76,9 +85,21 @@ func (ball *Ball) update(paddle1 *Paddle) {
 		}
 	}
 
+	//ball passed
 	if int(ball.Y) > winHeight {
-		ball.X = 400
-		ball.Y = 200
+		ballOverLow(ball, paddle1)
 	}
 
+}
+
+/**
+* ball overlow
+*/
+func ballOverLow(ball *Ball, paddle1 *Paddle) {
+
+	ball.X = 400
+	ball.Y = 485
+	ball.Xv = 0
+	ball.Yv = 0
+	paddle1.X = 400
 }
