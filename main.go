@@ -3,10 +3,16 @@ package main
 import (
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
+	"os"
 )
 
 const winWidth, winHeight int = 800, 600
 var speed float32 = 5
+
+var font *ttf.Font
+var solid *sdl.Surface
+var surface *sdl.Surface
 
 type Pos struct {
 	X, Y float32
@@ -54,6 +60,26 @@ func main() {
 	}
 	defer renderer.Destroy()
 
+	// font
+	if err := ttf.Init(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to initialize TTF: %s\n", err)
+		os.Exit(0)
+	}
+	if font, err = ttf.OpenFont("./test.ttf", 32); err != nil {
+		fmt.Fprint(os.Stderr, "Failed to open font: %s\n", err)
+		os.Exit(0)
+	}
+	defer font.Close()
+	if solid, err = font.RenderUTF8Solid("Hello, World!", sdl.Color{255, 0, 0, 255}); err != nil {
+		fmt.Fprint(os.Stderr, "Failed to render text: %s\n", err)
+		os.Exit(0)
+	}
+	defer solid.Free()
+	if surface, err = window.GetSurface(); err != nil {
+		fmt.Fprint(os.Stderr, "Failed to get window surface: %s\n", err)
+		os.Exit(0)
+	}
+
 	tex, err := renderer.CreateTexture(sdl.PIXELFORMAT_ABGR8888, sdl.TEXTUREACCESS_STREAMING, int32(winWidth), int32(winHeight))
 	if err != nil {
 		fmt.Println(err)
@@ -61,7 +87,13 @@ func main() {
 	}
 	defer tex.Destroy()
 
-	pixels := make([]byte, winWidth*winHeight*4)
+	if err = solid.Blit(nil, surface, nil); err != nil {
+		fmt.Fprint(os.Stderr, "Failed to put text on window surface: %s\n", err)
+		os.Exit(0)
+	}
+
+
+	pixels := make([]byte, winWidth*(winHeight-50)*4)
 
 	//for y := 0 ; y < winHeight; y++ {
 	//	for x := 0 ; x < winWidth; x++ {
@@ -100,6 +132,8 @@ func main() {
 
 
 		tex.Update(nil, pixels, winWidth*4)
+		rect := sdl.Rect{0, int32(winHeight -50), int32(winWidth), 50}
+		tex.Update(&rect, surface.Pixels(), winWidth*4)
 		renderer.Copy(tex, nil, nil)
 		renderer.Present()
 
