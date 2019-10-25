@@ -13,21 +13,31 @@ const fieldHeight = 10
 const blockWidth = 50
 const blockHeight = 20
 
-
 type Field struct {
 	Arr [fieldHeight][fieldWidth]Block
 }
 
-func InitField(block Block, field Field) Field {
+func InitField(block Block, field Field, level int) Field {
 
-	row := [fieldWidth]Block{}
+	fieldMap := initField(level)
 
-	for i := 0; i < len(row); i++ {
-		row[i] = block
-	}
+	for y := 0; y < fieldHeight; y++ {
+		row := [fieldWidth]Block{}
+		for x := 0; x < fieldWidth; x++ {
 
-	for i := 0; i < len(field.Arr); i++ {
-		field.Arr[i] = row
+			blockOne := block
+
+			if fieldMap[y][x] == "Y" {
+				blockOne.Color = Color{255, 255, 0}
+			} else if fieldMap[y][x] == "R" {
+				blockOne.Color = Color{255, 0, 0}
+			} else if fieldMap[y][x] == "0" {
+				blockOne.Exist = false
+			}
+
+			row[x] = blockOne
+		}
+		field.Arr[y] = row
 	}
 
 	return field

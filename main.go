@@ -72,7 +72,7 @@ func main() {
 	player1 := Paddle{Pos{100,500}, 100, 20, Color{255, 255, 255}}
 
 	block := Block{Pos{0,0}, 50, 20, Color{255, 255, 0}, true}
-	field := InitField(block, Field{})
+	field := InitField(block, Field{}, 2)
 
 	ball := Ball{Pos{300,300}, 5, speed/10, speed-speed/10,Color{255,255,255}}
 
